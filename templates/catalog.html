@@ -9,26 +9,28 @@
   </div>
 </section>
 
-<!-- Real-Time Gold Rate Summary Banner with Last Synced Timestamp -->
+<!-- Real-Time Gold Rate Summary Banner with Last Synced Timestamp & Countdown -->
 <div class="gold-rate-box" style="background: #e5dec9; padding: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin: 0 auto 30px auto; max-width: 1200px; border: 1px solid #d0c7b0;">
   <div>
     <h3 style="margin: 0; font-family: serif; font-size: 1.1rem; color: #594a26;">Today's Live Gold Rates</h3>
     <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #666;">
-      Prices updated automatically based on market rates &bull; <strong>Last synced at: {{ gold_rate_updated_at }}</strong>
+      Prices updated automatically based on market rates &bull; 
+      <strong id="last-synced">Last synced at: {{ gold_rate_updated_at }}</strong><br>
+      <span id="next-update" style="color: #7a6850; font-weight: 500; font-size: 0.75rem;">Next update in: 02:00</span>
     </p>
   </div>
   <div style="display: flex; gap: 15px;">
     <div style="background: #f4efe1; padding: 8px 15px; border-radius: 6px; text-align: center;">
       <span style="font-size: 0.7rem; display: block; color: #777;">24K GOLD / GRAM</span>
-      <strong style="font-size: 1rem; color: #333;">₹{{ "%.2f"|format(live_gold_rate_24k) }}</strong>
+      <strong id="rate-24k" style="font-size: 1rem; color: #333;">₹{{ "%.2f"|format(live_gold_rate_24k) }}</strong>
     </div>
     <div style="background: #f4efe1; padding: 8px 15px; border-radius: 6px; text-align: center;">
       <span style="font-size: 0.7rem; display: block; color: #777;">22K GOLD / GRAM</span>
-      <strong style="font-size: 1rem; color: #333;">₹{{ "%.2f"|format(live_gold_rate_22k) }}</strong>
+      <strong id="rate-22k" style="font-size: 1rem; color: #333;">₹{{ "%.2f"|format(live_gold_rate_22k) }}</strong>
     </div>
     <div style="background: #f4efe1; padding: 8px 15px; border-radius: 6px; text-align: center;">
       <span style="font-size: 0.7rem; display: block; color: #777;">18K GOLD / GRAM</span>
-      <strong style="font-size: 1rem; color: #333;">₹{{ "%.2f"|format(live_gold_rate_18k) }}</strong>
+      <strong id="rate-18k" style="font-size: 1rem; color: #333;">₹{{ "%.2f"|format(live_gold_rate_18k) }}</strong>
     </div>
   </div>
 </div>
@@ -90,6 +92,43 @@
     {% endif %}
   </div>
 </section>
+
+<!-- JavaScript for 2-Minute Polling and Live Countdown Clock -->
+<script>
+  const updateInterval = 2 * 60 * 1000; // 2 minutes
+  let nextUpdateTime = Date.now() + updateInterval;
+
+  function updateCountdown() {
+    const now = Date.now();
+    const timeLeft = Math.max(0, nextUpdateTime - now);
+    
+    const minutes = Math.floor(timeLeft / (60 * 1000));
+    const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
+
+    document.getElementById("next-update").innerText = 
+      `Next update in: ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+    if (timeLeft <= 0) {
+      fetchNewRates();
+      nextUpdateTime = Date.now() + updateInterval;
+    }
+  }
+
+  function fetchNewRates() {
+    fetch('/api/refresh-gold-rates') // Ensure you have this endpoint on your Flask backend
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById("rate-24k").innerText = `₹${Number(data.rate_24k).toFixed(2)}`;
+        document.getElementById("rate-22k").innerText = `₹${Number(data.rate_22k).toFixed(2)}`;
+        document.getElementById("rate-18k").innerText = `₹${Number(data.rate_18k).toFixed(2)}`;
+        document.getElementById("last-synced").innerText = `Last synced at: ${data.synced_at}`;
+      })
+      .catch(error => console.error('Error fetching live gold rates:', error));
+  }
+
+  // Run countdown loop every second
+  setInterval(updateCountdown, 1000);
+</script>
 
 {% include "header_ticker.html" ignore missing %}
 {% endblock %}
