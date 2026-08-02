@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Catalog — AI Jewellery Store{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div class="wrap">
+    <p class="eyebrow">Our Collection</p>
+    <h1>Full Catalog</h1>
+  </div>
+</section>
+
+<!-- Real-Time Gold Rate Summary Banner with Last Synced Timestamp -->
+<div class="gold-rate-box" style="background: #e5dec9; padding: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin: 0 auto 30px auto; max-width: 1200px; border: 1px solid #d0c7b0;">
+  <div>
+    <h3 style="margin: 0; font-family: serif; font-size: 1.1rem; color: #594a26;">Today's Live Gold Rates</h3>
+    <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #666;">
+      Prices updated automatically based on market rates &bull; <strong>Last synced at: {{ gold_rate_updated_at }}</strong>
+    </p>
+  </div>
+  <div style="display: flex; gap: 15px;">
+    <div style="background: #f4efe1; padding: 8px 15px; border-radius: 6px; text-align: center;">
+      <span style="font-size: 0.7rem; display: block; color: #777;">24K GOLD / GRAM</span>
+      <strong style="font-size: 1rem; color: #333;">₹{{ "%.2f"|format(live_gold_rate_24k) }}</strong>
+    </div>
+    <div style="background: #f4efe1; padding: 8px 15px; border-radius: 6px; text-align: center;">
+      <span style="font-size: 0.7rem; display: block; color: #777;">22K GOLD / GRAM</span>
+      <strong style="font-size: 1rem; color: #333;">₹{{ "%.2f"|format(live_gold_rate_22k) }}</strong>
+    </div>
+    <div style="background: #f4efe1; padding: 8px 15px; border-radius: 6px; text-align: center;">
+      <span style="font-size: 0.7rem; display: block; color: #777;">18K GOLD / GRAM</span>
+      <strong style="font-size: 1rem; color: #333;">₹{{ "%.2f"|format(live_gold_rate_18k) }}</strong>
+    </div>
+  </div>
+</div>
+
+<section class="section">
+  <div class="wrap">
+    <form class="filter-bar" method="get" action="{{ url_for('catalog') }}">
+      <input type="search" name="q" placeholder="Search by name, e.g. 'ring'" value="{{ q }}">
+
+      <select name="category">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+        <option value="{{ cat }}" {% if cat == selected_category %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="sort">
+        <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest First</option>
+        <option value="price_low" {% if sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+        <option value="price_high" {% if sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+        <option value="name" {% if sort == 'name' %}selected{% endif %}>Name: A to Z</option>
+      </select>
+
+      <button type="submit" class="btn btn-primary">Filter</button>
+      {% if q or selected_category or sort != 'newest' %}
+      <a href="{{ url_for('catalog') }}" class="btn btn-ghost">Clear</a>
+      {% endif %}
+    </form>
+
+    {% if products %}
+    <p class="result-count">{{ products|length }} piece{{ 's' if products|length != 1 else '' }} found</p>
+
+    <!-- Native CSS Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; margin-top: 20px;">
+      {% for product in products %}
+      <div style="background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+        <div>
+          <img src="{{ url_for('static', filename='uploads/' + product.image_filename) if product.image_filename else 'https://via.placeholder.com/300' }}"
+               alt="{{ product.name }}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300';"
+               style="width: 100%; height: 220px; object-fit: cover; border-radius: 6px; margin-bottom: 12px; background: #f8f9fa;">
+
+          <h3 style="font-size: 1.1rem; font-weight: 600; margin: 0 0 6px 0; color: #222;">{{ product.name }}</h3>
+          <p style="font-size: 0.85rem; color: #666; margin: 0 0 12px 0;">
+            Purity: {{ product.purity or 'N/A' }} | Weight: {{ product.weight_grams or '0' }}g
+          </p>
+        </div>
+        <div>
+          <h4 style="font-size: 1.2rem; font-weight: bold; color: #1a202c; margin: 0 0 12px 0;">
+            ₹{{ "{:,.2f}".format(product.calculated_price) if product.calculated_price else '0.00' }}
+          </h4>
+          <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-outline-dark"
+             style="display: block; text-align: center; width: 100%; padding: 8px 0; text-decoration: none; border: 1px solid #333; color: #333; border-radius: 4px;">View Details</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty-note">No products match your search. Try a different keyword or category.</p>
+    {% endif %}
+  </div>
+</section>
+
+{% include "header_ticker.html" ignore missing %}
+{% endblock %}

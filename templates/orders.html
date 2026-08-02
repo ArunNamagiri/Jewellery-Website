@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}My Orders — AI Jewellery Store{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div class="wrap">
+    <p class="eyebrow">Order History</p>
+    <h1>My Orders</h1>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    {% if orders %}
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr><th>Order #</th><th>Date</th><th>Total</th><th>Payment</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for o in orders %}
+            <tr>
+              <td>#{{ o['id'] }}</td>
+              <td>{{ o['created_at'][:16].replace('T', ' ') }}</td>
+              <td>&#8377;{{ "{:,.0f}".format(o['total_amount']) }}</td>
+              <td>{{ o['payment_method'].replace('_', ' ').title() }}</td>
+              <td><span class="pill pill-ok">{{ o['order_status'].title() }}</span></td>
+              <td><a href="{{ url_for('order_detail', order_id=o['id']) }}" class="btn btn-outline btn-small">View</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty-note">You haven't placed any orders yet. <a href="{{ url_for('catalog') }}">Browse the catalog &rarr;</a></p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

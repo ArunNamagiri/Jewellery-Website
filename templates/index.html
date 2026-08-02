@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}AI Jewellery Store | Fine Gold & Bridal Jewellery{% endblock %}
+
+{% block content %}
+<style>
+  @keyframes fadeInScale {
+    0% {
+      opacity: 0;
+      transform: translateY(20px) scale(0.97);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes floatSparkle {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-6px) rotate(5deg); }
+  }
+
+  .animated-login-card {
+    animation: fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    background: linear-gradient(145deg, #ffffff 0%, #fcfbfa 100%);
+    box-shadow: 0 20px 40px rgba(26, 46, 34, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .animated-login-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #d4af37, #f3e5ab, #d4af37);
+  }
+
+  .sparkle-icon {
+    font-size: 36px;
+    display: inline-block;
+    animation: floatSparkle 3s ease-in-out infinite;
+  }
+
+  .luxury-input {
+    transition: all 0.3s ease;
+    background: #faf9f6;
+  }
+
+  .luxury-input:focus {
+    background: #ffffff;
+    border-color: #1a2e22 !important;
+    box-shadow: 0 0 0 4px rgba(26, 46, 34, 0.08);
+  }
+
+  .luxury-btn {
+    transition: all 0.3s ease;
+    background: #1a2e22;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .luxury-btn:hover {
+    background: #274432;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(26, 46, 34, 0.2);
+  }
+
+  .luxury-btn:active {
+    transform: translateY(0);
+  }
+</style>
+
+<!-- Hero / Login Section -->
+<section class="hero-section" style="min-height: 90vh; padding: 40px 20px; background: radial-gradient(circle at center, #fbf9f4 0%, #f3eee3 100%); display: flex; justify-content: center; align-items: center;">
+  <div class="wrap" style="width: 100%; max-width: 480px;">
+    
+    <div class="login-card animated-login-card" style="padding: 45px 35px; border-radius: 16px;">
+      
+      <div class="login-header" style="text-align: center; margin-bottom: 30px;">
+        <span class="sparkle-icon" style="margin-bottom: 10px;">✨</span>
+        <h1 style="font-family: 'Cormorant Garamond', serif; color: #1a2e22; font-size: 32px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px;">Welcome to AI Jewellery Store</h1>
+        <p style="color: #666; font-size: 14px; margin: 0; font-weight: 300;">Enter your name and mobile number to explore or continue</p>
+      </div>
+
+      <!-- Flash Error / Success Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" style="padding: 12px 15px; margin-bottom: 20px; border-radius: 8px; font-size: 14px; background: {% if category == 'error' %}#f8d7da{% else %}#d4edda{% endif %}; color: {% if category == 'error' %}#721c24{% else %}#155724{% endif %}; animation: fadeInScale 0.4s ease;">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Login / Register Form on Home Page -->
+      <form action="{{ url_for('customer_login') }}" method="POST" class="login-form">
+        
+        <div class="form-group" style="margin-bottom: 22px;">
+          <label for="customer_name" style="display: block; font-weight: 600; font-size: 12px; color: #444; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Your Name</label>
+          <input 
+            type="text" 
+            id="customer_name" 
+            name="customer_name" 
+            placeholder="e.g. Priya Sharma" 
+            required 
+            class="form-control luxury-input"
+            style="width: 100%; padding: 14px 16px; border: 1px solid #e0dcd0; border-radius: 8px; font-size: 15px; outline: none; color: #222;"
+          >
+        </div>
+
+        <div class="form-group" style="margin-bottom: 28px;">
+          <label for="phone_number" style="display: block; font-weight: 600; font-size: 12px; color: #444; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Mobile Number</label>
+          <div style="display: flex; align-items: stretch; border: 1px solid #e0dcd0; border-radius: 8px; overflow: hidden; background: #faf9f6;" class="luxury-input">
+            <span style="background: #f0ebe1; padding: 14px 16px; font-weight: 600; color: #555; border-right: 1px solid #e0dcd0; display: flex; align-items: center; font-size: 15px;">+91</span>
+            <input 
+              type="tel" 
+              id="phone_number" 
+              name="phone_number" 
+              placeholder="10-digit mobile number" 
+              pattern="[0-9]{10}"
+              maxlength="10"
+              required 
+              style="width: 100%; padding: 14px 16px; border: none; font-size: 15px; outline: none; background: transparent; color: #222;"
+            >
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block luxury-btn" style="width: 100%; color: #fff; padding: 15px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; letter-spacing: 0.5px;">
+          Continue to Store &rarr;
+        </button>
+      </form>
+
+      <div style="text-align: center; margin-top: 28px; border-top: 1px solid #eee; padding-top: 20px;">
+        <p style="font-size: 12px; color: #888; margin: 0; font-weight: 400;">🔒 Your information is secure and used only for order updates.</p>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+{% endblock %}

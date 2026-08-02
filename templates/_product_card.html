@@ -1,0 +1,27 @@
+<div class="product-card">
+  <a class="product-card-link" href="{{ url_for('product_detail', product_id=p['id']) }}">
+    <div class="product-media">
+      {% if p['image_filename'] %}
+        <img src="{{ url_for('static', filename='uploads/' + p['image_filename']) }}" alt="{{ p['name'] }}" loading="lazy">
+      {% else %}
+        <div class="product-media-placeholder" aria-hidden="true">
+          <svg viewBox="0 0 60 60" width="42" height="42"><circle cx="30" cy="30" r="20" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M15 40 L30 20 L45 40 Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+        </div>
+      {% endif %}
+      {% if p['purity'] %}<span class="purity-badge">{{ p['purity'] }}</span>{% endif %}
+    </div>
+    <div class="product-info">
+      <span class="product-category">{{ p['category'] }}</span>
+      <h3 class="product-name">{{ p['name'] }}</h3>
+      <div class="product-meta">
+        <span class="product-price">&#8377;{{ "{:,.0f}".format(p['price']) }}</span>
+        {% if p['weight_grams'] %}<span class="product-weight">{{ p['weight_grams'] }} g</span>{% endif %}
+      </div>
+    </div>
+  </a>
+  {% if current_user %}
+    <form method="post" action="{{ url_for('wishlist_toggle', product_id=p['id']) }}" class="wishlist-form">
+      <button type="submit" class="wishlist-btn" aria-label="Toggle wishlist">&#9825;</button>
+    </form>
+  {% endif %}
+</div>

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Manage Products — Shop Owner Panel{% endblock %}
+{% block body_class %}admin-body{% endblock %}
+
+{% block content %}
+<section class="page-header admin-header">
+  <div class="wrap admin-header-inner">
+    <div>
+      <p class="eyebrow">Shop Owner Panel</p>
+      <h1>Manage Products</h1>
+    </div>
+    <a href="{{ url_for('admin_logout') }}" class="btn btn-ghost">Log Out</a>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    {% include "_admin_nav.html" %}
+
+    {% if products %}
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Photo</th><th>Name</th><th>Category</th><th>Price</th><th>Weight</th><th>Purity</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          {% for p in products %}
+          <tr>
+            <td class="thumb-cell">
+              {% if p['image_filename'] %}
+                <img src="{{ url_for('static', filename='uploads/' + p['image_filename']) }}" alt="" class="admin-thumb">
+              {% else %}
+                <div class="admin-thumb admin-thumb-empty"></div>
+              {% endif %}
+            </td>
+            <td>{{ p['name'] }}{% if p['featured'] %} <span class="pill pill-ok">Featured</span>{% endif %}</td>
+            <td>{{ p['category'] }}</td>
+            <td>&#8377;{{ "{:,.0f}".format(p['price']) }}</td>
+            <td>{{ p['weight_grams'] or "—" }}{% if p['weight_grams'] %} g{% endif %}</td>
+            <td>{{ p['purity'] or "—" }}</td>
+            <td>{% if p['in_stock'] %}<span class="pill pill-ok">In Stock</span>{% else %}<span class="pill pill-off">Sold</span>{% endif %}</td>
+            <td class="actions-cell">
+              <a href="{{ url_for('admin_edit_product', product_id=p['id']) }}" class="btn btn-outline btn-small">Edit</a>
+              <form method="post" action="{{ url_for('admin_toggle_stock', product_id=p['id']) }}" class="inline-form">
+                <button type="submit" class="btn btn-ghost btn-small">{{ "Mark Sold" if p['in_stock'] else "Mark In Stock" }}</button>
+              </form>
+              <form method="post" action="{{ url_for('admin_delete_product', product_id=p['id']) }}" class="inline-form" onsubmit="return confirm('Delete this product? This cannot be undone.');">
+                <button type="submit" class="btn btn-danger btn-small">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <p class="empty-note">No products yet. <a href="{{ url_for('admin_add_product') }}">Add your first piece &rarr;</a></p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

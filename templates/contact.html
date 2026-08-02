@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Contact — AI Jewellery Store{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div class="wrap">
+    <p class="eyebrow">We'd Love to Hear From You</p>
+    <h1>Visit or Get in Touch</h1>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap contact-grid">
+    <div class="contact-info">
+      <h3>Store Hours</h3>
+      <p>Open daily &middot; 10:00 AM &ndash; 8:30 PM</p>
+      <h3>Custom Orders</h3>
+      <p>We take custom and bridal orders — bring a reference image or design and we'll quote you a price and timeline.</p>
+      <h3>By Phone</h3>
+      <p>Prefer to call? Leave your number below and we'll ring you back the same day.</p>
+    </div>
+
+    <form method="post" class="contact-form">
+      <label>Your Name
+        <input type="text" name="customer_name" required>
+      </label>
+      <label>Phone Number
+        <input type="tel" name="phone" required>
+      </label>
+      <label>Message
+        <textarea name="message" rows="5" placeholder="Tell us what you're looking for..."></textarea>
+      </label>
+      <button type="submit" class="btn btn-primary">Send Message</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

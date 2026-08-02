@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Shop Owner Login{% endblock %}
+{% block body_class %}admin-body{% endblock %}
+
+{% block content %}
+<section class="section auth-section">
+  <div class="wrap auth-wrap">
+    <form method="post" class="auth-form">
+      <p class="eyebrow">Shop Owner Access</p>
+      <h1>Log In</h1>
+      <label>Username
+        <input type="text" name="username" autofocus required>
+      </label>
+      <label>Password
+        <input type="password" name="password" required>
+      </label>
+      <button type="submit" class="btn btn-primary btn-block">Log In</button>
+      <p class="auth-hint">Default: admin / jewellery123 — change this in app.py before going live.</p>
+    </form>
+  </div>
+</section>
+{% endblock %}

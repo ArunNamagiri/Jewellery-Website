@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Checkout — AI Jewellery Store{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div class="wrap">
+    <p class="eyebrow">Almost There</p>
+    <h1>Checkout</h1>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap contact-grid">
+    <div class="contact-info">
+      <h3>Order Summary</h3>
+      {% for i in items %}
+        <p>{{ i['name'] }} &times; {{ i['quantity'] }} — &#8377;{{ "{:,.0f}".format(i['price'] * i['quantity']) }}</p>
+      {% endfor %}
+      <h3>Total: &#8377;{{ "{:,.0f}".format(total) }}</h3>
+    </div>
+
+    <form method="post" class="contact-form">
+      <label>Full Name
+        <input type="text" name="shipping_name" value="{{ current_user['name'] if current_user else '' }}" required>
+      </label>
+      <label>Phone Number
+        <input type="tel" name="shipping_phone" value="{{ current_user['phone'] if current_user else '' }}" required>
+      </label>
+      <label>Delivery Address
+        <textarea name="shipping_address" rows="4" required>{{ current_user['address'] if current_user else '' }}</textarea>
+      </label>
+      <label>Payment Method
+        <select name="payment_method">
+          <option value="pay_at_store">Pay at Store</option>
+          <option value="cash_on_delivery">Cash on Delivery</option>
+        </select>
+      </label>
+      <p class="form-hint">Online payment (Razorpay) isn't connected yet — orders are confirmed by phone for now.</p>
+      <button type="submit" class="btn btn-primary">Place Order</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

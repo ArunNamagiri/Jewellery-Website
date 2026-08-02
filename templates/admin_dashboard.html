@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Shop Owner Panel{% endblock %}
+{% block body_class %}admin-body{% endblock %}
+
+{% block content %}
+<section class="page-header admin-header">
+  <div class="wrap admin-header-inner">
+    <div>
+      <p class="eyebrow">Shop Owner Panel</p>
+      <h1>Good to see you, {{ session.get('admin_name', 'Owner') }}</h1>
+    </div>
+    <a href="{{ url_for('admin_logout') }}" class="btn btn-ghost">Log Out</a>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    {% include "_admin_nav.html" %}
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="stat-label">Total Products</span>
+        <span class="stat-value">{{ total_products }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">In Stock</span>
+        <span class="stat-value">{{ in_stock }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Sold / Unavailable</span>
+        <span class="stat-value">{{ sold_out }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">New Enquiries</span>
+        <span class="stat-value">{{ new_enquiries }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Total Orders</span>
+        <span class="stat-value">{{ total_orders }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Pending Orders</span>
+        <span class="stat-value">{{ pending_orders }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Total Customers</span>
+        <span class="stat-value">{{ total_customers }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Total Revenue</span>
+        <span class="stat-value">&#8377;{{ "{:,.0f}".format(total_revenue) }}</span>
+      </div>
+      <div class="stat-card stat-card-wide">
+        <span class="stat-label">Total Stock Value (In-Stock Items)</span>
+        <span class="stat-value">&#8377;{{ "{:,.0f}".format(stock_value) }}</span>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <h2>Recent Orders</h2>
+      <a href="{{ url_for('admin_orders') }}" class="btn btn-outline">View All &rarr;</a>
+    </div>
+
+    {% if recent_orders %}
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Order #</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th></tr>
+        </thead>
+        <tbody>
+          {% for o in recent_orders %}
+          <tr>
+            <td>#{{ o['id'] }}</td>
+            <td>{{ o['customer_name'] }}</td>
+            <td>&#8377;{{ "{:,.0f}".format(o['total_amount']) }}</td>
+            <td><span class="pill pill-ok">{{ o['order_status'].title() }}</span></td>
+            <td>{{ o['created_at'][:16].replace('T', ' ') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <p class="empty-note">No orders yet.</p>
+    {% endif %}
+
+    {% if top_products %}
+    <div class="section-head">
+      <h2>Top Selling Products</h2>
+    </div>
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Product</th><th>Units Sold</th><th>Revenue</th></tr>
+        </thead>
+        <tbody>
+          {% for p in top_products %}
+          <tr>
+            <td>{{ p['product_name'] }}</td>
+            <td>{{ p['total_qty'] }}</td>
+            <td>&#8377;{{ "{:,.0f}".format(p['total_sales']) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    <div class="section-head">
+      <h2>Recent Enquiries</h2>
+      <a href="{{ url_for('admin_enquiries') }}" class="btn btn-outline">View All &rarr;</a>
+    </div>
+
+    {% if recent_enquiries %}
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Customer</th><th>Phone</th><th>Product</th><th>When</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          {% for e in recent_enquiries %}
+          <tr>
+            <td>{{ e['customer_name'] }}</td>
+            <td>{{ e['phone'] }}</td>
+            <td>{{ e['product_name'] or "General enquiry" }}</td>
+            <td>{{ e['created_at'][:16].replace('T', ' ') }}</td>
+            <td>{% if e['handled'] %}<span class="pill pill-ok">Handled</span>{% else %}<span class="pill pill-new">New</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <p class="empty-note">No enquiries yet.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

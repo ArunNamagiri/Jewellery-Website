@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}AI Jewellery Store{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+{% if request.endpoint != 'home' %}
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a href="{{ url_for('home') }}" class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 60 60" width="34" height="34">
+          <circle cx="30" cy="30" r="27" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          <circle cx="30" cy="30" r="20" fill="none" stroke="currentColor" stroke-width="1"/>
+          <text x="30" y="35" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="16" fill="currentColor">AJ</text>
+        </svg>
+      </span>
+      <span class="brand-text">
+        <span class="brand-name">AI Jewellery Store</span>
+        <span class="brand-sub">Fine Gold &amp; Bridal Jewellery</span>
+      </span>
+    </a>
+
+    <!-- Desktop Navigation -->
+    <nav class="main-nav" aria-label="Primary">
+      <a href="{{ url_for('home') }}">Home</a>
+      <a href="{{ url_for('catalog') }}">Catalog</a>
+      <a href="{{ url_for('contact') }}">Contact</a>
+      <a href="{{ url_for('owner_portal') }}" class="owner-link-btn">Owner Portal</a>
+    </nav>
+
+    <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+
+  <!-- Mobile Navigation -->
+  <nav class="mobile-nav" id="mobileNav" aria-label="Mobile">
+    <a href="{{ url_for('home') }}">Home</a>
+    <a href="{{ url_for('catalog') }}">Catalog</a>
+    <a href="{{ url_for('contact') }}">Contact</a>
+  </nav>
+</header>
+{% endif %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-stack wrap">
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <span class="brand-name">AI Jewellery Store</span>
+      <p>Hallmarked gold jewellery, crafted with care. Visit us for a piece as timeless as your story.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Explore</h4>
+      <a href="{{ url_for('catalog') }}">Full Catalog</a>
+      <a href="{{ url_for('catalog') }}?category=Rings">Rings</a>
+      <a href="{{ url_for('catalog') }}?category=Necklaces">Necklaces</a>
+    </div>
+    <div class="footer-col">
+      <h4>Visit / Call</h4>
+      <p>Open daily &middot; 10:00 AM &ndash; 8:30 PM</p>
+      <p>Call for an appointment or custom order.</p>
+      <a href="{{ url_for('contact') }}">Get in touch &rarr;</a>
+    </div>
+  </div>
+  <div class="wrap footer-bottom">
+    <span>&copy; {{ current_year }} AI Jewellery Store. All rights reserved.</span>
+  </div>
+</footer>
+
+<div id="chatWidget" class="chat-widget">
+  <button id="chatToggle" class="chat-toggle" aria-label="Open chat">&#128172;</button>
+  <div id="chatPanel" class="chat-panel">
+    <div class="chat-header">
+      <span>Ask Us Anything</span>
+      <button id="chatClose" aria-label="Close chat">&times;</button>
+    </div>
+    <div id="chatMessages" class="chat-messages">
+      <div class="chat-msg chat-msg-bot">Hi! Ask me about store hours, pricing, purity, custom orders, payment, or delivery.</div>
+    </div>
+    <form id="chatForm" class="chat-form">
+      <input type="text" id="chatInput" placeholder="Type your question..." autocomplete="off">
+      <button type="submit" class="btn btn-primary btn-small">Send</button>
+    </form>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

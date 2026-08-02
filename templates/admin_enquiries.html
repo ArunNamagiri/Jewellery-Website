@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Customer Enquiries — Shop Owner Panel{% endblock %}
+{% block body_class %}admin-body{% endblock %}
+
+{% block content %}
+<section class="page-header admin-header">
+  <div class="wrap admin-header-inner">
+    <div>
+      <p class="eyebrow">Shop Owner Panel</p>
+      <h1>Customer Enquiries</h1>
+    </div>
+    <a href="{{ url_for('admin_logout') }}" class="btn btn-ghost">Log Out</a>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    {% include "_admin_nav.html" %}
+
+    {% if enquiries %}
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Customer</th><th>Phone</th><th>Product</th><th>Message</th><th>When</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          {% for e in enquiries %}
+          <tr>
+            <td>{{ e['customer_name'] }}</td>
+            <td><a href="tel:{{ e['phone'] }}">{{ e['phone'] }}</a></td>
+            <td>{{ e['product_name'] or "General enquiry" }}</td>
+            <td class="msg-cell">{{ e['message'] or "—" }}</td>
+            <td>{{ e['created_at'][:16].replace('T', ' ') }}</td>
+            <td>{% if e['handled'] %}<span class="pill pill-ok">Handled</span>{% else %}<span class="pill pill-new">New</span>{% endif %}</td>
+            <td>
+              <form method="post" action="{{ url_for('admin_toggle_enquiry', enquiry_id=e['id']) }}" class="inline-form">
+                <button type="submit" class="btn btn-outline btn-small">{{ "Mark New" if e['handled'] else "Mark Handled" }}</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <p class="empty-note">No enquiries yet.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}My Wishlist — AI Jewellery Store{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div class="wrap">
+    <p class="eyebrow">Saved For Later</p>
+    <h1>My Wishlist</h1>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    {% if products %}
+      <div class="product-grid">
+        {% for p in products %}
+          {% include "_product_card.html" %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty-note">Your wishlist is empty. <a href="{{ url_for('catalog') }}">Browse the catalog &rarr;</a></p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

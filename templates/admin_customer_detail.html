@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ customer['name'] }} — Shop Owner Panel{% endblock %}
+{% block body_class %}admin-body{% endblock %}
+
+{% block content %}
+<section class="page-header admin-header">
+  <div class="wrap admin-header-inner">
+    <div>
+      <p class="eyebrow">Shop Owner Panel</p>
+      <h1>{{ customer['name'] }}</h1>
+    </div>
+    <a href="{{ url_for('admin_logout') }}" class="btn btn-ghost">Log Out</a>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    {% include "_admin_nav.html" %}
+
+    <div class="contact-info" style="margin-bottom:24px">
+      <p><strong>Email:</strong> {{ customer['email'] }}</p>
+      <p><strong>Phone:</strong> {{ customer['phone'] or "—" }}</p>
+      <p><strong>Address:</strong> {{ customer['address'] or "—" }}</p>
+      <p><strong>Customer since:</strong> {{ customer['created_at'][:10] }}</p>
+    </div>
+
+    <h2>Order History</h2>
+    {% if orders %}
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Order #</th><th>Total</th><th>Status</th><th>Date</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for o in orders %}
+          <tr>
+            <td>#{{ o['id'] }}</td>
+            <td>&#8377;{{ "{:,.0f}".format(o['total_amount']) }}</td>
+            <td><span class="pill pill-ok">{{ o['order_status'].title() }}</span></td>
+            <td>{{ o['created_at'][:16].replace('T', ' ') }}</td>
+            <td><a href="{{ url_for('admin_order_detail', order_id=o['id']) }}" class="btn btn-outline btn-small">View</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <p class="empty-note">No orders yet.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order['id'] }} — Shop Owner Panel{% endblock %}
+{% block body_class %}admin-body{% endblock %}
+
+{% block content %}
+<section class="page-header admin-header">
+  <div class="wrap admin-header-inner">
+    <div>
+      <p class="eyebrow">Shop Owner Panel</p>
+      <h1>Order #{{ order['id'] }}</h1>
+    </div>
+    <a href="{{ url_for('admin_logout') }}" class="btn btn-ghost">Log Out</a>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    {% include "_admin_nav.html" %}
+
+    <div class="contact-grid">
+      <div class="contact-info">
+        <h3>Customer</h3>
+        <p>{{ order['customer_name'] }}<br>
+           {{ order['customer_email'] }}<br>
+           <a href="tel:{{ order['customer_phone'] }}">{{ order['customer_phone'] }}</a></p>
+        <h3>Shipping Address</h3>
+        <p>{{ order['shipping_name'] }}<br>{{ order['shipping_phone'] }}<br>{{ order['shipping_address'] }}</p>
+        <h3>Payment</h3>
+        <p>{{ order['payment_method'].replace('_', ' ').title() }}</p>
+
+        <h3>Update Status</h3>
+        <form method="post" action="{{ url_for('admin_update_order_status', order_id=order['id']) }}" class="inline-form">
+          <select name="order_status">
+            {% for s in statuses %}
+              <option value="{{ s }}" {% if s == order['order_status'] %}selected{% endif %}>{{ s.title() }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-primary btn-small">Save</button>
+        </form>
+      </div>
+
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr><th>Item</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>
+          </thead>
+          <tbody>
+            {% for i in items %}
+            <tr>
+              <td>{{ i['product_name'] }}</td>
+              <td>&#8377;{{ "{:,.0f}".format(i['price']) }}</td>
+              <td>{{ i['quantity'] }}</td>
+              <td>&#8377;{{ "{:,.0f}".format(i['price'] * i['quantity']) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <h3 style="margin-top:16px">Total: &#8377;{{ "{:,.0f}".format(order['total_amount']) }}</h3>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

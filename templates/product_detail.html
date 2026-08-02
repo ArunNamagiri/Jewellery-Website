@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}{{ product['name'] }} — AI Jewellery Store{% endblock %}
+
+{% block content %}
+<section class="section product-detail-section">
+  <div class="wrap product-detail">
+    <div class="product-detail-media">
+      {% if product['image_filename'] %}
+        <img src="{{ url_for('static', filename='uploads/' + product['image_filename']) }}" alt="{{ product['name'] }}">
+      {% else %}
+        <div class="product-media-placeholder large" aria-hidden="true">
+          <svg viewBox="0 0 60 60" width="80" height="80"><circle cx="30" cy="30" r="20" fill="none" stroke="currentColor" stroke-width="1"/><path d="M15 40 L30 20 L45 40 Z" fill="none" stroke="currentColor" stroke-width="1"/></svg>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="product-detail-info">
+      <span class="product-category">{{ product['category'] }}</span>
+      <h1>{{ product['name'] }}</h1>
+      <p class="product-detail-price">&#8377;{{ "{:,.0f}".format(product['price']) }}</p>
+
+      <ul class="spec-list">
+        {% if product['purity'] %}<li><span>Purity</span><span>{{ product['purity'] }}</span></li>{% endif %}
+        {% if product['weight_grams'] %}<li><span>Weight</span><span>{{ product['weight_grams'] }} g</span></li>{% endif %}
+        <li><span>Availability</span><span>{{ "In Stock" if product['in_stock'] else "Currently Unavailable" }}</span></li>
+      </ul>
+
+      {% if product['description'] %}
+        <p class="product-description">{{ product['description'] }}</p>
+      {% endif %}
+
+      {% if product['in_stock'] %}
+        <div class="product-detail-actions">
+          {% if current_user %}
+            <form method="post" action="{{ url_for('cart_add', product_id=product['id']) }}" class="inline-form">
+              <button type="submit" class="btn btn-primary">Add to Cart</button>
+            </form>
+            <form method="post" action="{{ url_for('wishlist_toggle', product_id=product['id']) }}" class="inline-form">
+              <button type="submit" class="btn btn-outline">&#9825; Wishlist</button>
+            </form>
+          {% else %}
+            <a href="{{ url_for('customer_login', next=request.path) }}" class="btn btn-primary">Log In to Add to Cart</a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if product['in_stock'] %}
+      <div class="enquiry-box">
+        <h3>Interested in this piece?</h3>
+        <p>Leave your number and we'll call you back — or visit us in person to see it up close.</p>
+        <form method="post" action="{{ url_for('enquire', product_id=product['id']) }}" class="enquiry-form">
+          <input type="text" name="customer_name" placeholder="Your name" required>
+          <input type="tel" name="phone" placeholder="Phone number" required>
+          <textarea name="message" placeholder="Any specific request? (optional)" rows="3"></textarea>
+          <button type="submit" class="btn btn-primary">Send Enquiry</button>
+        </form>
+      </div>
+      {% else %}
+        <p class="empty-note">This piece is currently unavailable. Browse similar items below.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if related %}
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">You May Also Like</p>
+      <h2>More in {{ product['category'] }}</h2>
+    </div>
+    <div class="product-grid">
+      {% for p in related %}
+        {% include "_product_card.html" %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if ai_recommended %}
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">AI Picks</p>
+      <h2>Recommended For You</h2>
+    </div>
+    <div class="product-grid">
+      {% for p in ai_recommended %}
+        {% include "_product_card.html" %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

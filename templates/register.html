@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Create Account — AI Jewellery Store{% endblock %}
+
+{% block content %}
+<section class="section auth-section">
+  <div class="wrap auth-wrap">
+    <form method="post" class="auth-form">
+      <p class="eyebrow">New Here?</p>
+      <h1>Create Your Account</h1>
+      <label>Full Name
+        <input type="text" name="name" autofocus required>
+      </label>
+      <label>Email Address
+        <input type="email" name="email" required>
+      </label>
+      <label>Phone Number
+        <input type="tel" name="phone">
+      </label>
+      <label>Password
+        <input type="password" name="password" minlength="6" required>
+      </label>
+      <label>Confirm Password
+        <input type="password" name="confirm_password" minlength="6" required>
+      </label>
+      <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+      <p class="auth-hint">Already have an account? <a href="{{ url_for('customer_login') }}">Log in here</a>.</p>
+    </form>
+  </div>
+</section>
+{% endblock %}

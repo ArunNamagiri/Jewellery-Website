@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}My Profile — AI Jewellery Store{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div class="wrap">
+    <p class="eyebrow">Your Account</p>
+    <h1>My Profile</h1>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="account-links">
+      <a href="{{ url_for('orders') }}" class="btn btn-outline btn-small">Order History</a>
+      <a href="{{ url_for('wishlist') }}" class="btn btn-outline btn-small">My Wishlist</a>
+      <a href="{{ url_for('cart_view') }}" class="btn btn-outline btn-small">My Cart</a>
+    </div>
+
+    <form method="post" class="product-form">
+      <div class="form-grid">
+        <label>Full Name
+          <input type="text" name="name" value="{{ user['name'] }}" required>
+        </label>
+        <label>Email Address
+          <input type="email" value="{{ user['email'] }}" disabled>
+        </label>
+        <label>Phone Number
+          <input type="tel" name="phone" value="{{ user['phone'] or '' }}">
+        </label>
+        <label class="full-width">Address
+          <textarea name="address" rows="3">{{ user['address'] or '' }}</textarea>
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="{{ url_for('customer_logout') }}" class="btn btn-ghost">Log Out</a>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}
