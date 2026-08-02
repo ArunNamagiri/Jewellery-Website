@@ -15,7 +15,7 @@ Features:
 import os
 import time
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 import requests
 import psycopg2
@@ -26,6 +26,8 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
+load_dotenv()
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
@@ -34,7 +36,48 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "change-this-secret-key-before-going-live")
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024  # 8 MB max upload
+app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024  # 8 MB max upload]
+
+
+import time
+from datetime import datetime
+from flask import jsonify
+
+# Cooldown set to exactly 2 minutes (120 seconds)
+COOLDOWN_SECONDS = 120 
+
+# In-memory or database tracking variables
+last_sync_timestamp = 0
+cached_rates = {
+    "rate_24k": 14285.90,
+    "rate_22k": 13095.41,
+    "rate_18k": 10714.42,
+    "synced_at": datetime.now().strftime("%H:%M:%S")}
+
+@app.route('/api/refresh-gold-rates', methods=['GET'])
+def refresh_gold_rates():
+    global last_sync_timestamp, cached_rates
+    current_time = time.time()
+    
+    # Check if the 2-minute interval has elapsed
+    if current_time - last_sync_timestamp >= COOLDOWN_SECONDS:
+        # TODO: Insert your external Gold API fetching logic here
+        # Example using the 1.15 Indian market multiplier:
+        # raw_24k = fetch_from_external_gold_api()
+        # rate_24k = raw_24k * 1.15
+        
+        now_str = datetime.datetime.now().strftime("%H:%M:%S")
+        
+        # Update cached values with fresh calculated rates
+        cached_rates = {
+            "rate_24k": 14285.90,  # Replace with newly fetched/calculated rate
+            "rate_22k": 13095.41,  # rate_24k * (22 / 24)
+            "rate_18k": 10714.42,  # rate_24k * (18 / 24)
+            "synced_at": now_str
+        }
+        last_sync_timestamp = current_time
+
+    return jsonify(cached_rates)
 
 # ---------------------------------------------------------------------------
 # PostgreSQL Database Setup (Neon Compatible)
@@ -83,7 +126,7 @@ def close_db(exception=None):
 
 
 def init_db():
-    """Initializes PostgreSQL tables if they don't exist and seeds sample products."""
+    """Initializes PostgreSQL tables if they don't exist and seeds sample products and gold rates."""
     try:
         conn = get_connection()
         conn.autocommit = True
@@ -105,6 +148,15 @@ def init_db():
                 )
             """)
             cur.execute("""
+                CREATE TABLE IF NOT EXISTS gold_rates (
+                    id SERIAL PRIMARY KEY,
+                    rate_24k DECIMAL(12,2) NOT NULL,
+                    rate_22k DECIMAL(12,2) NOT NULL,
+                    rate_18k DECIMAL(12,2) NOT NULL,
+                    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("""
                 CREATE TABLE IF NOT EXISTS enquiries (
                     id SERIAL PRIMARY KEY,
                     product_id INT NULL,
@@ -116,7 +168,6 @@ def init_db():
                     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
                 )
             """)
-            # Updated to ensure email, address, and password_hash columns exist safely
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     id SERIAL PRIMARY KEY,
@@ -179,6 +230,18 @@ def init_db():
             """)
 
         with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM gold_rates")
+            rate_count = cur.fetchone()[0]
+
+        if rate_count == 0:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """INSERT INTO gold_rates (rate_24k, rate_22k, rate_18k, updated_at)
+                       VALUES (%s, %s, %s, CURRENT_TIMESTAMP)""",
+                    (14296.00, 13101.00, 10728.00)
+                )
+
+        with conn.cursor() as cur:
             cur.execute("SELECT COUNT(*) FROM products")
             count = cur.fetchone()[0]
 
@@ -207,11 +270,6 @@ CATEGORIES = ["Rings", "Necklaces", "Earrings", "Bangles & Bracelets", "Chains",
 # ---------------------------------------------------------------------------
 # Real-Time Gold Rate & Dynamic Pricing Settings
 # ---------------------------------------------------------------------------
-GOLD_RATE_CACHE = {
-    "price_per_gram_24k": 14290.00,  # Realistic baseline market rate in INR/gram
-    "last_updated": 0
-}
-
 PURITY_FACTORS = {
     "24K": 1.0,
     "22K": 22.0 / 24.0,  # ~0.9167
@@ -219,39 +277,63 @@ PURITY_FACTORS = {
     "14K": 14.0 / 24.0,  # ~0.5833
 }
 
-def get_live_gold_rate_per_gram():
-    """Fetches 24K gold rate per gram with a 15-minute in-memory cache."""
-    current_time = time.time()
-    
-    if current_time - GOLD_RATE_CACHE["last_updated"] < 900 and GOLD_RATE_CACHE["last_updated"] > 0:
-        return (
-            GOLD_RATE_CACHE["price_per_gram_24k"], 
-            datetime.fromtimestamp(GOLD_RATE_CACHE["last_updated"]).strftime("%H:%M:%S")
-        )
-
+def update_live_gold_rates_if_needed(db):
+    """Fetches real-time market gold rates and updates database if cooldown has passed."""
     try:
+        latest = db.execute("SELECT * FROM gold_rates ORDER BY updated_at DESC LIMIT 1").fetchone()
+        if latest and latest["updated_at"]:
+            last_updated = latest["updated_at"]
+            if isinstance(last_updated, datetime) and (datetime.now() - last_updated) < timedelta(minutes=15):
+                return
+
         api_key = os.environ.get("GOLD_API_KEY", "").strip()
         if api_key and api_key != "YOUR_API_KEY_HERE":
-            api_url = "https://www.goldapi.io/api/XAU/INR"
+            url = "https://www.goldapi.io/api/XAU/INR"
             headers = {"x-access-token": api_key}
-            response = requests.get(api_url, headers=headers, timeout=5)
-            
+            response = requests.get(url, headers=headers, timeout=5)
+            print(f"GoldAPI Status Code: {response.status_code}")
             if response.status_code == 200:
                 data = response.json()
-                price_per_ounce = data.get("price")
-                if price_per_ounce:
-                    price_per_gram_24k = float(price_per_ounce) / 31.1034768
-                    GOLD_RATE_CACHE["price_per_gram_24k"] = price_per_gram_24k
-                    GOLD_RATE_CACHE["last_updated"] = current_time
+                print(f"GoldAPI Response Data: {data}")
+                price_per_gram_24k = data.get("price_gram_24k")
+                if not price_per_gram_24k and "price" in data:
+                    price_per_gram_24k = float(data.get("price")) / 31.1034768
+                
+                if price_per_gram_24k:
+    # Multiply the international spot rate by ~1.15 to account for Indian Import Duty + GST
+                    indian_market_multiplier = 1.15 
+                    
+                    rate_24k = float(price_per_gram_24k) * indian_market_multiplier
+                    rate_22k = rate_24k * (22 / 24)
+                    rate_18k = rate_24k * (18 / 24)
+                                    
+                    if latest:
+                        db.execute(
+                            """UPDATE gold_rates 
+                               SET rate_24k = %s, rate_22k = %s, rate_18k = %s, updated_at = CURRENT_TIMESTAMP
+                               WHERE id = %s""",
+                            (rate_24k, rate_22k, rate_18k, latest["id"])
+                        )
+                    else:
+                        db.execute(
+                            """INSERT INTO gold_rates (rate_24k, rate_22k, rate_18k, updated_at)
+                               VALUES (%s, %s, %s, CURRENT_TIMESTAMP)""",
+                            (rate_24k, rate_22k, rate_18k)
+                        )
+                    db.commit()
+            else:
+                print(f"GoldAPI Error Response: {response.text}")
     except Exception as e:
-        print(f"Error fetching gold rate: {e}")
+        print("Using cached/fallback rates due to API error:", e)
 
-    update_time_str = datetime.fromtimestamp(
-        GOLD_RATE_CACHE["last_updated"] if GOLD_RATE_CACHE["last_updated"] > 0 else current_time
-    ).strftime("%H:%M:%S")
-
-    return GOLD_RATE_CACHE["price_per_gram_24k"], update_time_str
-
+def get_live_gold_rate_per_gram():
+    """Retrieves the latest gold rates from the database."""
+    db = get_db()
+    rates = db.execute("SELECT * FROM gold_rates ORDER BY updated_at DESC LIMIT 1").fetchone()
+    if rates:
+        update_time_str = rates["updated_at"].strftime("%H:%M:%S") if hasattr(rates["updated_at"], "strftime") else str(rates["updated_at"])[11:19]
+        return float(rates["rate_24k"]), float(rates["rate_22k"]), float(rates["rate_18k"]), update_time_str
+    return 14296.00, 13101.00, 10728.00, "00:00:00"
 
 def calculate_dynamic_price(item, base_gold_rate_24k):
     """Calculates product price dynamically based on weight, purity, and live rate."""
@@ -280,13 +362,12 @@ def calculate_dynamic_price(item, base_gold_rate_24k):
 
 def prepare_products(products_cursor_or_list):
     """Prepares product rows and injects dynamic pricing."""
-    raw_rate = get_live_gold_rate_per_gram()
-    base_rate_24k = raw_rate[0] if isinstance(raw_rate, tuple) else raw_rate
+    rate_24k, _, _, _ = get_live_gold_rate_per_gram()
 
     prepared = []
     for row in products_cursor_or_list:
         item = dict(row)
-        item["calculated_price"] = calculate_dynamic_price(item, base_rate_24k)
+        item["calculated_price"] = calculate_dynamic_price(item, rate_24k)
         prepared.append(item)
     return prepared
 
@@ -438,15 +519,15 @@ def get_faq_reply(message):
 
 @app.context_processor
 def inject_globals():
-    rate_24k, rate_time = get_live_gold_rate_per_gram()
+    rate_24k, rate_22k, rate_18k, rate_time = get_live_gold_rate_per_gram()
     return {
         "categories": CATEGORIES,
         "current_year": datetime.now().year,
         "current_user": get_current_user(),
         "cart_count": get_cart_count(),
         "live_gold_rate_24k": round(rate_24k, 2),
-        "live_gold_rate_22k": round(rate_24k * (22 / 24), 2),
-        "live_gold_rate_18k": round(rate_24k * (18 / 24), 2),
+        "live_gold_rate_22k": round(rate_22k, 2),
+        "live_gold_rate_18k": round(rate_18k, 2),
         "gold_rate_updated_at": rate_time,
     }
 
@@ -457,12 +538,16 @@ def inject_globals():
 @app.route("/")
 @customer_login_required
 def home():
+    db = get_db()
+    update_live_gold_rates_if_needed(db)
     return render_template("index.html")
 
 @app.route("/catalog")
 @customer_login_required
 def catalog():
     db = get_db()
+    update_live_gold_rates_if_needed(db)
+    
     category = request.args.get("category", "").strip()
     q = request.args.get("q", "").strip()
     sort = request.args.get("sort", "newest")
@@ -489,7 +574,7 @@ def catalog():
     else:
         products.sort(key=lambda x: x["created_at"], reverse=True)
 
-    rate_24k, rate_time = get_live_gold_rate_per_gram()
+    rate_24k, rate_22k, rate_18k, rate_time = get_live_gold_rate_per_gram()
 
     return render_template(
         "catalog.html", 
@@ -499,8 +584,8 @@ def catalog():
         sort=sort,
         categories=CATEGORIES,
         live_gold_rate_24k=round(rate_24k, 2),
-        live_gold_rate_22k=round(rate_24k * (22 / 24), 2),
-        live_gold_rate_18k=round(rate_24k * (18 / 24), 2),
+        live_gold_rate_22k=round(rate_22k, 2),
+        live_gold_rate_18k=round(rate_18k, 2),
         gold_rate_updated_at=rate_time
     )
 
@@ -508,11 +593,14 @@ def catalog():
 @app.route("/product/<int:product_id>")
 def product_detail(product_id):
     db = get_db()
+    update_live_gold_rates_if_needed(db)
+    
     product = db.execute("SELECT * FROM products WHERE id = ?", (product_id,)).fetchone()
     if product is None:
         abort(404)
 
-    rate_24k, _ = get_live_gold_rate_per_gram()
+    rate_24k, _, _, _ = get_live_gold_rate_per_gram()
+    product = dict(product)
     product["calculated_price"] = calculate_dynamic_price(product, rate_24k)
 
     related = prepare_products(
@@ -733,7 +821,7 @@ def cart_view():
         (session["user_id"],),
     ).fetchall()
 
-    rate_24k, _ = get_live_gold_rate_per_gram()
+    rate_24k, _, _, _ = get_live_gold_rate_per_gram()
     for item in items:
         item["calculated_price"] = calculate_dynamic_price(item, rate_24k)
 
@@ -813,7 +901,7 @@ def checkout():
         flash("Your cart is empty.", "error")
         return redirect(url_for("cart_view"))
 
-    rate_24k, _ = get_live_gold_rate_per_gram()
+    rate_24k, _, _, _ = get_live_gold_rate_per_gram()
     for item in items:
         item["calculated_price"] = calculate_dynamic_price(item, rate_24k)
 
@@ -1113,7 +1201,7 @@ def save_product(product_id=None, existing_image=None):
                 in_stock, featured, created_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (name, category, price, weight, purity, description, image_filename,
-             in_stock, featured, datetime.now().isoformat()),
+               in_stock, featured, datetime.now().isoformat()),
         )
         flash("Product added.", "success")
     db.commit()
