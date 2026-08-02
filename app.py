@@ -116,6 +116,7 @@ def init_db():
                     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
                 )
             """)
+            # Updated to ensure email, address, and password_hash columns exist safely
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     id SERIAL PRIMARY KEY,
