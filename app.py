@@ -161,7 +161,7 @@ OLLAMA_TIMEOUT_SECONDS = 8
 # ---------------------------------------------------------------------------
 # MySQL connection settings
 # ---------------------------------------------------------------------------
-DB_HOST = os.environ.get("DB_HOST", "127.0.0.1")
+DB_HOST = os.environ.get("MYSQL_HOST") or os.environ.get("DB_HOST")
 DB_PORT = int(os.environ.get("DB_PORT", "3306"))
 DB_USER = os.environ.get("DB_USER", "jewellery_user")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "jewellery_pass")
