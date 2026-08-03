@@ -673,6 +673,7 @@ def customer_login():
         name = request.form.get("customer_name", "").strip() or request.form.get("name", "").strip()
         phone = request.form.get("phone_number", "").strip() or request.form.get("phone", "").strip()
 
+        # Fixed: Validate phone presence properly to prevent database UniqueViolation 500 crash
         if not phone:
             flash("Please enter a valid mobile number.", "error")
             return redirect(url_for("customer_login"))
