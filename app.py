@@ -688,18 +688,26 @@ def customer_login():
             session["user_id"] = user["id"]
             flash(f"Welcome back, {update_name}!", "success")
         else:
+            # If it's a new user, use the name they typed, or fallback cleanly
             if not name:
                 name = f"Customer {phone[-4:]}"
-                
-            db.execute(
-                """INSERT INTO users (name, phone, email, address, password_hash, created_at)
-                   VALUES (?, ?, NULL, '', NULL, ?)""",
-                (name, phone, datetime.now().isoformat()),
-            )
-            db.commit()
-            new_user = db.execute("SELECT * FROM users WHERE phone = ?", (phone,)).fetchone()
-            session["user_id"] = new_user["id"]
-            flash(f"Welcome, {new_user['name']}! Your account has been created.", "success")
+
+            # Check if user already exists to avoid crashes
+            existing_user = db.execute("SELECT * FROM users WHERE phone = ?", (phone,)).fetchone()
+            
+            if existing_user:
+                session["user_id"] = existing_user["id"]
+                flash(f"Welcome back, {existing_user['name']}!", "success")
+            else:
+                db.execute(
+                    """INSERT INTO users (name, phone, email, address, password_hash, created_at)
+                       VALUES (?, ?, NULL, '', NULL, ?)""",
+                    (name, phone, datetime.now().isoformat()),
+                )
+                db.commit()
+                new_user = db.execute("SELECT * FROM users WHERE phone = ?", (phone,)).fetchone()
+                session["user_id"] = new_user["id"]
+                flash(f"Welcome, {new_user['name']}! Your account has been created.", "success")
 
         next_url = request.args.get("next")
         if not next_url or "profile" in next_url or "login" in next_url:
