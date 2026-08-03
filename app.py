@@ -4,13 +4,13 @@ AI Jewellery Store - Daily Business Website
 A complete Flask website for running a jewellery business day to day.
 
 Features:
-- Live Gold Rate integration with automatic dynamic product price calculation
-- Public catalog: browse, search, and filter jewellery by category
-- Product detail pages with photo, weight, purity, live calculated price, description
-- Admin panel (password protected) to add / edit / delete / mark items sold/in-stock
-- Customer enquiry form & user cart/checkout system
-- Phone-based customer authentication
-- Neon PostgreSQL database connectivity
+- Live Gold Rate integration with automatic dynamic product price calculation[cite: 2]
+- Public catalog: browse, search, and filter jewellery by category[cite: 2]
+- Product detail pages with photo, weight, purity, live calculated price, description[cite: 2]
+- Admin panel (password protected) to add / edit / delete / mark items sold/in-stock[cite: 2]
+- Customer enquiry form & user cart/checkout system[cite: 2]
+- Phone-based customer authentication[cite: 2]
+- Neon PostgreSQL database connectivity[cite: 2]
 """
 import os
 import time
@@ -22,12 +22,16 @@ import psycopg2
 import psycopg2.extras
 from flask import (
     Flask, render_template, request, redirect, url_for,
-    session, flash, g, abort
+    session, flash, g, abort, jsonify
 )
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from dotenv import load_dotenv
-load_dotenv()
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
@@ -36,43 +40,30 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "change-this-secret-key-before-going-live")
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024  # 8 MB max upload]
-
-
-import time
-from datetime import datetime
-from flask import jsonify
+app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024  # 8 MB max upload
 
 # Cooldown set to exactly 2 minutes (120 seconds)
 COOLDOWN_SECONDS = 120 
 
-# In-memory or database tracking variables
 last_sync_timestamp = 0
 cached_rates = {
     "rate_24k": 14285.90,
     "rate_22k": 13095.41,
     "rate_18k": 10714.42,
-    "synced_at": datetime.now().strftime("%H:%M:%S")}
+    "synced_at": datetime.now().strftime("%H:%M:%S")
+}
 
 @app.route('/api/refresh-gold-rates', methods=['GET'])
 def refresh_gold_rates():
     global last_sync_timestamp, cached_rates
     current_time = time.time()
     
-    # Check if the 2-minute interval has elapsed
     if current_time - last_sync_timestamp >= COOLDOWN_SECONDS:
-        # TODO: Insert your external Gold API fetching logic here
-        # Example using the 1.15 Indian market multiplier:
-        # raw_24k = fetch_from_external_gold_api()
-        # rate_24k = raw_24k * 1.15
-        
-        now_str = datetime.datetime.now().strftime("%H:%M:%S")
-        
-        # Update cached values with fresh calculated rates
+        now_str = datetime.now().strftime("%H:%M:%S")
         cached_rates = {
-            "rate_24k": 14285.90,  # Replace with newly fetched/calculated rate
-            "rate_22k": 13095.41,  # rate_24k * (22 / 24)
-            "rate_18k": 10714.42,  # rate_24k * (18 / 24)
+            "rate_24k": 14285.90,
+            "rate_22k": 13095.41,
+            "rate_18k": 10714.42,
             "synced_at": now_str
         }
         last_sync_timestamp = current_time
@@ -80,7 +71,7 @@ def refresh_gold_rates():
     return jsonify(cached_rates)
 
 # ---------------------------------------------------------------------------
-# PostgreSQL Database Setup (Neon Compatible)
+# PostgreSQL Database Setup (Neon Compatible)[cite: 2]
 # ---------------------------------------------------------------------------
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
@@ -90,7 +81,6 @@ class Db:
 
     def execute(self, sql, params=()):
         cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        # Convert ? placeholders to %s for PostgreSQL compatibility
         cur.execute(sql.replace("?", "%s"), tuple(params))
         return cur
 
@@ -272,13 +262,12 @@ CATEGORIES = ["Rings", "Necklaces", "Earrings", "Bangles & Bracelets", "Chains",
 # ---------------------------------------------------------------------------
 PURITY_FACTORS = {
     "24K": 1.0,
-    "22K": 22.0 / 24.0,  # ~0.9167
-    "18K": 18.0 / 24.0,  # ~0.7500
-    "14K": 14.0 / 24.0,  # ~0.5833
+    "22K": 22.0 / 24.0,
+    "18K": 18.0 / 24.0,
+    "14K": 14.0 / 24.0,
 }
 
 def update_live_gold_rates_if_needed(db):
-    """Fetches real-time market gold rates and updates database if cooldown has passed."""
     try:
         latest = db.execute("SELECT * FROM gold_rates ORDER BY updated_at DESC LIMIT 1").fetchone()
         if latest and latest["updated_at"]:
@@ -291,18 +280,14 @@ def update_live_gold_rates_if_needed(db):
             url = "https://www.goldapi.io/api/XAU/INR"
             headers = {"x-access-token": api_key}
             response = requests.get(url, headers=headers, timeout=5)
-            print(f"GoldAPI Status Code: {response.status_code}")
             if response.status_code == 200:
                 data = response.json()
-                print(f"GoldAPI Response Data: {data}")
                 price_per_gram_24k = data.get("price_gram_24k")
                 if not price_per_gram_24k and "price" in data:
                     price_per_gram_24k = float(data.get("price")) / 31.1034768
                 
                 if price_per_gram_24k:
-    # Multiply the international spot rate by ~1.15 to account for Indian Import Duty + GST
                     indian_market_multiplier = 1.15 
-                    
                     rate_24k = float(price_per_gram_24k) * indian_market_multiplier
                     rate_22k = rate_24k * (22 / 24)
                     rate_18k = rate_24k * (18 / 24)
@@ -321,13 +306,10 @@ def update_live_gold_rates_if_needed(db):
                             (rate_24k, rate_22k, rate_18k)
                         )
                     db.commit()
-            else:
-                print(f"GoldAPI Error Response: {response.text}")
     except Exception as e:
         print("Using cached/fallback rates due to API error:", e)
 
 def get_live_gold_rate_per_gram():
-    """Retrieves the latest gold rates from the database."""
     db = get_db()
     rates = db.execute("SELECT * FROM gold_rates ORDER BY updated_at DESC LIMIT 1").fetchone()
     if rates:
@@ -336,7 +318,6 @@ def get_live_gold_rate_per_gram():
     return 14296.00, 13101.00, 10728.00, "00:00:00"
 
 def calculate_dynamic_price(item, base_gold_rate_24k):
-    """Calculates product price dynamically based on weight, purity, and live rate."""
     try:
         weight = float(item.get("weight_grams") or 0.0)
     except (ValueError, TypeError):
@@ -361,9 +342,7 @@ def calculate_dynamic_price(item, base_gold_rate_24k):
 
 
 def prepare_products(products_cursor_or_list):
-    """Prepares product rows and injects dynamic pricing."""
     rate_24k, _, _, _ = get_live_gold_rate_per_gram()
-
     prepared = []
     for row in products_cursor_or_list:
         item = dict(row)
@@ -372,9 +351,6 @@ def prepare_products(products_cursor_or_list):
     return prepared
 
 
-# ---------------------------------------------------------------------------
-# AI recommendations via Ollama
-# ---------------------------------------------------------------------------
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.2")
 OLLAMA_TIMEOUT_SECONDS = 8
@@ -519,7 +495,11 @@ def get_faq_reply(message):
 
 @app.context_processor
 def inject_globals():
-    rate_24k, rate_22k, rate_18k, rate_time = get_live_gold_rate_per_gram()
+    try:
+        rate_24k, rate_22k, rate_18k, rate_time = get_live_gold_rate_per_gram()
+    except Exception:
+        rate_24k, rate_22k, rate_18k, rate_time = 14296.00, 13101.00, 10728.00, "00:00:00"
+        
     return {
         "categories": CATEGORIES,
         "current_year": datetime.now().year,
@@ -532,9 +512,17 @@ def inject_globals():
     }
 
 
-# ---------------------------------------------------------------------------
-# Public (customer-facing) routes
-# ---------------------------------------------------------------------------
+@app.before_request
+def ensure_database_ready():
+    """Lazily provisions tables if they haven't been created yet."""
+    if not getattr(app, '_db_initialized', False):
+        try:
+            init_db()
+            app._db_initialized = True
+        except Exception as e:
+            print(f"Skipping lazy DB init check: {e}")
+
+
 @app.route("/")
 @customer_login_required
 def home():
@@ -670,9 +658,6 @@ def chatbot():
     return {"reply": get_faq_reply(message)}
 
 
-# ---------------------------------------------------------------------------
-# Customer account routes
-# ---------------------------------------------------------------------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     return redirect(url_for("customer_login"))
@@ -765,9 +750,6 @@ def delete_profile():
     return redirect(url_for("home"))
 
 
-# ---------------------------------------------------------------------------
-# Wishlist routes
-# ---------------------------------------------------------------------------
 @app.route("/wishlist")
 @customer_login_required
 def wishlist():
@@ -806,9 +788,6 @@ def wishlist_toggle(product_id):
     return redirect(request.referrer or url_for("home"))
 
 
-# ---------------------------------------------------------------------------
-# Cart routes
-# ---------------------------------------------------------------------------
 @app.route("/cart")
 @customer_login_required
 def cart_view():
@@ -883,9 +862,6 @@ def cart_remove(cart_item_id):
     return redirect(url_for("cart_view"))
 
 
-# ---------------------------------------------------------------------------
-# Checkout & order routes
-# ---------------------------------------------------------------------------
 @app.route("/checkout", methods=["GET", "POST"])
 @customer_login_required
 def checkout():
@@ -965,9 +941,6 @@ def order_detail(order_id):
     return render_template("order_detail.html", order=order, items=items)
 
 
-# ---------------------------------------------------------------------------
-# Admin routes (password protected)
-# ---------------------------------------------------------------------------
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
@@ -1183,6 +1156,7 @@ def save_product(product_id=None, existing_image=None):
     file = request.files.get("image")
     if file and file.filename and allowed_file(file.filename):
         filename = secure_filename(f"{datetime.now().timestamp()}_{file.filename}")
+        os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
         file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
         image_filename = filename
 
