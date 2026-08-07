@@ -721,12 +721,11 @@ def customer_login():
 
     return render_template("login.html")
 
-
 @app.route("/logout")
 def customer_logout():
-    session.pop("user_id", None)
+    session.clear()
     flash("You have been logged out.", "success")
-    return redirect(url_for("home"))
+    return redirect(url_for("customer_login"))
 
 
 @app.route("/profile", methods=["GET", "POST"])
