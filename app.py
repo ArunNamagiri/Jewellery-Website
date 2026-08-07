@@ -26,6 +26,11 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
+import os
+
+# Explicitly load the .env file
+load_dotenv()
 
 try:
     from dotenv import load_dotenv  # type: ignore[import-not-found]
