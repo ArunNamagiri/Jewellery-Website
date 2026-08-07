@@ -671,55 +671,58 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def customer_login():
-    if session.get("user_id"):
-        return redirect(url_for("catalog"))
-        
     if request.method == "POST":
-        db = get_db()
-        name = request.form.get("customer_name", "").strip() or request.form.get("name", "").strip()
-        phone = request.form.get("phone_number", "").strip() or request.form.get("phone", "").strip()
+        name = request.form.get("customer_name", "").strip()
+        phone = request.form.get("phone_number", "").strip()
 
-        # Fixed: Validate phone presence properly to prevent database UniqueViolation 500 crash
-        if not phone:
-            flash("Please enter a valid mobile number.", "error")
+        if not name:
+            flash("Please enter your name.", "error")
             return redirect(url_for("customer_login"))
 
-        user = db.execute("SELECT * FROM users WHERE phone = ?", (phone,)).fetchone()
+        if not phone:
+            flash("Please enter your mobile number.", "error")
+            return redirect(url_for("customer_login"))
+
+        if len(phone) != 10 or not phone.isdigit():
+            flash("Enter a valid 10-digit mobile number.", "error")
+            return redirect(url_for("customer_login"))
+
+        db = Database()
+
+        # Check if user already exists
+        user = db.fetchone(
+            "SELECT id, name FROM users WHERE phone=?",
+            (phone,)
+        )
 
         if user:
-            update_name = name if name and name != user["name"] else user["name"]
-            db.execute("UPDATE users SET name = ? WHERE id = ?", (update_name, user["id"]))
-            db.commit()
-            
-            session["user_id"] = user["id"]
-            flash(f"Welcome back, {update_name}!", "success")
-        else:
-            # If it's a new user, use the name they typed, or fallback cleanly
-            if not name:
-                name = f"Customer {phone[-4:]}"
+            session["customer_id"] = user["id"]
+            session["customer_name"] = user["name"]
+            session["customer_phone"] = phone
+            return redirect(url_for("catalog"))
 
-            # Check if user already exists to avoid crashes
-            existing_user = db.execute("SELECT * FROM users WHERE phone = ?", (phone,)).fetchone()
-            
-            if existing_user:
-                session["user_id"] = existing_user["id"]
-                flash(f"Welcome back, {existing_user['name']}!", "success")
-            else:
-                db.execute(
-                    """INSERT INTO users (name, phone, email, address, password_hash, created_at)
-                       VALUES (?, ?, NULL, '', NULL, ?)""",
-                    (name, phone, datetime.now().isoformat()),
-                )
-                db.commit()
-                new_user = db.execute("SELECT * FROM users WHERE phone = ?", (phone,)).fetchone()
-                session["user_id"] = new_user["id"]
-                flash(f"Welcome, {new_user['name']}! Your account has been created.", "success")
+        # Create new user
+        db.execute(
+            """
+            INSERT INTO users
+            (name, phone, email, address, password_hash, created_at)
+            VALUES (?, ?, NULL, '', NULL, ?)
+            """,
+            (name, phone, datetime.now().isoformat())
+        )
 
-        next_url = request.args.get("next")
-        if not next_url or "profile" in next_url or "login" in next_url:
-            next_url = url_for("catalog")
-            
-        return redirect(next_url)
+        db.commit()
+
+        user = db.fetchone(
+            "SELECT id, name FROM users WHERE phone=?",
+            (phone,)
+        )
+
+        session["customer_id"] = user["id"]
+        session["customer_name"] = user["name"]
+        session["customer_phone"] = phone
+
+        return redirect(url_for("catalog"))
 
     return render_template("login.html")
 
