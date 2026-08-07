@@ -668,7 +668,6 @@ def chatbot():
 def register():
     return redirect(url_for("customer_login"))
 
-
 @app.route("/login", methods=["GET", "POST"])
 def customer_login():
     if request.method == "POST":
@@ -687,21 +686,18 @@ def customer_login():
             flash("Enter a valid 10-digit mobile number.", "error")
             return redirect(url_for("customer_login"))
 
-        db = Database()
+        db = get_db()
 
-        # Check if user already exists
-        user = db.fetchone(
-            "SELECT id, name FROM users WHERE phone=?",
+        user = db.execute(
+            "SELECT * FROM users WHERE phone = ?",
             (phone,)
-        )
+        ).fetchone()
 
         if user:
-            session["customer_id"] = user["id"]
+            session["user_id"] = user["id"]
             session["customer_name"] = user["name"]
-            session["customer_phone"] = phone
             return redirect(url_for("catalog"))
 
-        # Create new user
         db.execute(
             """
             INSERT INTO users
@@ -713,14 +709,13 @@ def customer_login():
 
         db.commit()
 
-        user = db.fetchone(
-            "SELECT id, name FROM users WHERE phone=?",
+        user = db.execute(
+            "SELECT * FROM users WHERE phone = ?",
             (phone,)
-        )
+        ).fetchone()
 
-        session["customer_id"] = user["id"]
+        session["user_id"] = user["id"]
         session["customer_name"] = user["name"]
-        session["customer_phone"] = phone
 
         return redirect(url_for("catalog"))
 
