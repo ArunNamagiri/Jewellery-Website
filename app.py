@@ -11,7 +11,6 @@ Features:
 - Customer enquiry form & user cart/checkout system[cite: 2]
 - Phone-based customer authentication[cite: 2]
 - Neon PostgreSQL database connectivity[cite: 2]
-- Fully adaptive design handling mobile and desktop screens seamlessly
 """
 import os
 import time
@@ -29,10 +28,11 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 
 try:
-    from dotenv import load_dotenv
+    from dotenv import load_dotenv  # type: ignore[import-not-found]
     load_dotenv()
 except ImportError:
-    pass
+    def load_dotenv() -> bool:
+        return False
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "static", "uploads")
@@ -674,6 +674,7 @@ def customer_login():
         name = request.form.get("customer_name", "").strip() or request.form.get("name", "").strip()
         phone = request.form.get("phone_number", "").strip() or request.form.get("phone", "").strip()
 
+        # Fixed: Validate phone presence properly to prevent database UniqueViolation 500 crash
         if not phone:
             flash("Please enter a valid mobile number.", "error")
             return redirect(url_for("customer_login"))
@@ -688,9 +689,11 @@ def customer_login():
             session["user_id"] = user["id"]
             flash(f"Welcome back, {update_name}!", "success")
         else:
+            # If it's a new user, use the name they typed, or fallback cleanly
             if not name:
                 name = f"Customer {phone[-4:]}"
 
+            # Check if user already exists to avoid crashes
             existing_user = db.execute("SELECT * FROM users WHERE phone = ?", (phone,)).fetchone()
             
             if existing_user:
