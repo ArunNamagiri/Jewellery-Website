@@ -11,6 +11,7 @@ Features:
 - Customer enquiry form & user cart/checkout system[cite: 2]
 - Phone-based customer authentication[cite: 2]
 - Neon PostgreSQL database connectivity[cite: 2]
+- Fully adaptive design handling mobile and desktop screens seamlessly
 """
 import os
 import time
@@ -688,11 +689,9 @@ def customer_login():
             session["user_id"] = user["id"]
             flash(f"Welcome back, {update_name}!", "success")
         else:
-            # If it's a new user, use the name they typed, or fallback cleanly
             if not name:
                 name = f"Customer {phone[-4:]}"
 
-            # Check if user already exists to avoid crashes
             existing_user = db.execute("SELECT * FROM users WHERE phone = ?", (phone,)).fetchone()
             
             if existing_user:
