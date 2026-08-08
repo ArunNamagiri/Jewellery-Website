@@ -9,28 +9,28 @@
   </div>
 </section>
 
-<!-- Real-Time Gold Rate Summary Banner with Last Synced Timestamp & Countdown -->
-<div class="gold-rate-box" style="background: #e5dec9; padding: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin: 0 auto 30px auto; max-width: 1200px; border: 1px solid #d0c7b0;">
+<div class="gold-rate-box" style="background:#e5dec9;padding:20px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;margin:0 auto 30px;max-width:1200px;border:1px solid #d0c7b0;">
   <div>
-    <h3 style="margin: 0; font-family: serif; font-size: 1.1rem; color: #594a26;">Today's Live Gold Rates</h3>
-    <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #666;">
-      Prices updated automatically based on market rates &bull; 
-      <strong id="last-synced">Last synced at: {{ gold_rate_updated_at }}</strong><br>
-      <span id="next-update" style="color: #7a6850; font-weight: 500; font-size: 0.75rem;">Next update in: 02:00</span>
+    <h3 style="margin:0;font-family:serif;font-size:1.1rem;color:#594a26;">Today's Live Gold Rates</h3>
+    <p style="margin:4px 0 0;font-size:.85rem;color:#666;">
+      Live market-linked prices • <strong id="last-synced">Last synced at: {{ gold_rate_updated_at }}</strong><br>
+      <span id="rate-source" style="color:#7a6850;font-size:.75rem;">Source: Live market feed</span>
+      <span style="color:#7a6850;font-weight:500;font-size:.75rem;"> • </span>
+      <span id="next-update" style="color:#7a6850;font-weight:500;font-size:.75rem;">Checking latest rate…</span>
     </p>
   </div>
-  <div style="display: flex; gap: 15px;">
-    <div style="background: #f4efe1; padding: 8px 15px; border-radius: 6px; text-align: center;">
-      <span style="font-size: 0.7rem; display: block; color: #777;">24K GOLD / GRAM</span>
-      <strong id="rate-24k" style="font-size: 1rem; color: #333;">₹{{ "%.2f"|format(live_gold_rate_24k) }}</strong>
+  <div style="display:flex;gap:15px;">
+    <div style="background:#f4efe1;padding:8px 15px;border-radius:6px;text-align:center;">
+      <span style="font-size:.7rem;display:block;color:#777;">24K GOLD / GRAM</span>
+      <strong id="rate-24k" style="font-size:1rem;color:#333;">₹{{ "%.2f"|format(live_gold_rate_24k) }}</strong>
     </div>
-    <div style="background: #f4efe1; padding: 8px 15px; border-radius: 6px; text-align: center;">
-      <span style="font-size: 0.7rem; display: block; color: #777;">22K GOLD / GRAM</span>
-      <strong id="rate-22k" style="font-size: 1rem; color: #333;">₹{{ "%.2f"|format(live_gold_rate_22k) }}</strong>
+    <div style="background:#f4efe1;padding:8px 15px;border-radius:6px;text-align:center;">
+      <span style="font-size:.7rem;display:block;color:#777;">22K GOLD / GRAM</span>
+      <strong id="rate-22k" style="font-size:1rem;color:#333;">₹{{ "%.2f"|format(live_gold_rate_22k) }}</strong>
     </div>
-    <div style="background: #f4efe1; padding: 8px 15px; border-radius: 6px; text-align: center;">
-      <span style="font-size: 0.7rem; display: block; color: #777;">18K GOLD / GRAM</span>
-      <strong id="rate-18k" style="font-size: 1rem; color: #333;">₹{{ "%.2f"|format(live_gold_rate_18k) }}</strong>
+    <div style="background:#f4efe1;padding:8px 15px;border-radius:6px;text-align:center;">
+      <span style="font-size:.7rem;display:block;color:#777;">18K GOLD / GRAM</span>
+      <strong id="rate-18k" style="font-size:1rem;color:#333;">₹{{ "%.2f"|format(live_gold_rate_18k) }}</strong>
     </div>
   </div>
 </div>
@@ -39,21 +39,18 @@
   <div class="wrap">
     <form class="filter-bar" method="get" action="{{ url_for('catalog') }}">
       <input type="search" name="q" placeholder="Search by name, e.g. 'ring'" value="{{ q }}">
-
       <select name="category">
         <option value="">All Categories</option>
         {% for cat in categories %}
         <option value="{{ cat }}" {% if cat == selected_category %}selected{% endif %}>{{ cat }}</option>
         {% endfor %}
       </select>
-
       <select name="sort">
         <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest First</option>
         <option value="price_low" {% if sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
         <option value="price_high" {% if sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
         <option value="name" {% if sort == 'name' %}selected{% endif %}>Name: A to Z</option>
       </select>
-
       <button type="submit" class="btn btn-primary">Filter</button>
       {% if q or selected_category or sort != 'newest' %}
       <a href="{{ url_for('catalog') }}" class="btn btn-ghost">Clear</a>
@@ -62,27 +59,19 @@
 
     {% if products %}
     <p class="result-count">{{ products|length }} piece{{ 's' if products|length != 1 else '' }} found</p>
-
-    <!-- Native CSS Grid -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; margin-top: 20px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;margin-top:20px;">
       {% for product in products %}
-      <div style="background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+      <div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:16px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 2px 4px rgba(0,0,0,.04);">
         <div>
           <img src="{{ url_for('static', filename='uploads/' + product.image_filename) if product.image_filename else 'https://via.placeholder.com/300' }}"
                alt="{{ product.name }}" onerror="this.onerror=null;this.src='https://via.placeholder.com/300';"
-               style="width: 100%; height: 220px; object-fit: cover; border-radius: 6px; margin-bottom: 12px; background: #f8f9fa;">
-
-          <h3 style="font-size: 1.1rem; font-weight: 600; margin: 0 0 6px 0; color: #222;">{{ product.name }}</h3>
-          <p style="font-size: 0.85rem; color: #666; margin: 0 0 12px 0;">
-            Purity: {{ product.purity or 'N/A' }} | Weight: {{ product.weight_grams or '0' }}g
-          </p>
+               style="width:100%;height:220px;object-fit:cover;border-radius:6px;margin-bottom:12px;background:#f8f9fa;">
+          <h3 style="font-size:1.1rem;font-weight:600;margin:0 0 6px;color:#222;">{{ product.name }}</h3>
+          <p style="font-size:.85rem;color:#666;margin:0 0 12px;">Purity: {{ product.purity or 'N/A' }} | Weight: {{ product.weight_grams or '0' }}g</p>
         </div>
         <div>
-          <h4 style="font-size: 1.2rem; font-weight: bold; color: #1a202c; margin: 0 0 12px 0;">
-            ₹{{ "{:,.2f}".format(product.calculated_price) if product.calculated_price else '0.00' }}
-          </h4>
-          <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-outline-dark"
-             style="display: block; text-align: center; width: 100%; padding: 8px 0; text-decoration: none; border: 1px solid #333; color: #333; border-radius: 4px;">View Details</a>
+          <h4 style="font-size:1.2rem;font-weight:bold;color:#1a202c;margin:0 0 12px;">₹{{ "{:,.2f}".format(product.calculated_price) if product.calculated_price else '0.00' }}</h4>
+          <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-outline-dark" style="display:block;text-align:center;width:100%;padding:8px 0;text-decoration:none;border:1px solid #333;color:#333;border-radius:4px;">View Details</a>
         </div>
       </div>
       {% endfor %}
@@ -93,41 +82,55 @@
   </div>
 </section>
 
-<!-- JavaScript for 2-Minute Polling and Live Countdown Clock -->
 <script>
-  const updateInterval = 2 * 60 * 1000; // 2 minutes
-  let nextUpdateTime = Date.now() + updateInterval;
+(() => {
+  const countdown = document.getElementById('next-update');
+  const synced = document.getElementById('last-synced');
+  const source = document.getElementById('rate-source');
+  let nextRefreshAt = Date.now() + 300000;
+  let refreshInProgress = false;
 
-  function updateCountdown() {
-    const now = Date.now();
-    const timeLeft = Math.max(0, nextUpdateTime - now);
-    
-    const minutes = Math.floor(timeLeft / (60 * 1000));
-    const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
+  function renderCountdown() {
+    const remaining = Math.max(0, nextRefreshAt - Date.now());
+    const totalSeconds = Math.ceil(remaining / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    countdown.textContent = `Next live rate check in: ${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+  }
 
-    document.getElementById("next-update").innerText = 
-      `Next update in: ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  async function fetchLatestRates() {
+    if (refreshInProgress) return;
+    refreshInProgress = true;
+    try {
+      const response = await fetch('/api/refresh-gold-rates', { cache: 'no-store' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
 
-    if (timeLeft <= 0) {
-      fetchNewRates();
-      nextUpdateTime = Date.now() + updateInterval;
+      document.getElementById('rate-24k').textContent = `₹${Number(data.rate_24k).toFixed(2)}`;
+      document.getElementById('rate-22k').textContent = `₹${Number(data.rate_22k).toFixed(2)}`;
+      document.getElementById('rate-18k').textContent = `₹${Number(data.rate_18k).toFixed(2)}`;
+      synced.textContent = `Last synced at: ${data.synced_at}`;
+      source.textContent = `Source: ${data.source || 'Live market feed'}`;
+
+      const seconds = Number(data.next_refresh_seconds || 300);
+      nextRefreshAt = Date.now() + seconds * 1000;
+    } catch (error) {
+      console.error('Live gold-rate update failed:', error);
+      countdown.textContent = 'Live rate temporarily unavailable — showing last known rate';
+      nextRefreshAt = Date.now() + 30000;
+    } finally {
+      refreshInProgress = false;
     }
   }
 
-  function fetchNewRates() {
-    fetch('/api/refresh-gold-rates') // Ensure you have this endpoint on your Flask backend
-      .then(response => response.json())
-      .then(data => {
-        document.getElementById("rate-24k").innerText = `₹${Number(data.rate_24k).toFixed(2)}`;
-        document.getElementById("rate-22k").innerText = `₹${Number(data.rate_22k).toFixed(2)}`;
-        document.getElementById("rate-18k").innerText = `₹${Number(data.rate_18k).toFixed(2)}`;
-        document.getElementById("last-synced").innerText = `Last synced at: ${data.synced_at}`;
-      })
-      .catch(error => console.error('Error fetching live gold rates:', error));
-  }
-
-  // Run countdown loop every second
-  setInterval(updateCountdown, 1000);
+  // Immediately reconcile the browser with the server's latest cached/live rate.
+  fetchLatestRates();
+  renderCountdown();
+  setInterval(() => {
+    renderCountdown();
+    if (Date.now() >= nextRefreshAt) fetchLatestRates();
+  }, 1000);
+})();
 </script>
 
 {% include "header_ticker.html" ignore missing %}
