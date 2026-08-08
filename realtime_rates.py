@@ -1,4 +1,4 @@
-"""Live XAU/INR gold-rate adapter for the Flask jewellery store."""
+"""Live XAU/INR gold-rate adapter + Google Authenticator OTP bootstrap."""
 import os
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
@@ -120,9 +120,12 @@ def live_refresh_endpoint():
     })
 
 
-# Override the old hard-coded updater/endpoint before Gunicorn starts serving.
+# Replace the previous hard-coded updater and endpoint before serving requests.
 core.update_live_gold_rates_if_needed = lambda db: refresh_live_rates()[0]
 core.get_live_gold_rate_per_gram = live_gold_rate_per_gram
 core.app.view_functions["refresh_gold_rates"] = live_refresh_endpoint
+
+# Register the persistent Google Authenticator routes and guards too.
+import otp_entrypoint  # noqa: E402,F401
 
 app = core.app
