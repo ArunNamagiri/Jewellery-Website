@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Authenticator Verification | Shop Owner{% endblock %}
+{% block body_class %}admin-body{% endblock %}
+
+{% block content %}
+<section class="section auth-section">
+  <div class="wrap auth-wrap" style="max-width:480px;margin:auto;">
+    <form method="post" class="auth-form" autocomplete="off">
+      <p class="eyebrow">Two-factor authentication</p>
+      <h1>Enter Authenticator Code</h1>
+      <p>Open Google Authenticator and enter the current 6-digit code.</p>
+      <label for="code">6-digit verification code
+        <input id="code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" minlength="6" required autofocus style="text-align:center;letter-spacing:8px;font-size:24px;">
+      </label>
+      <button type="submit" class="btn btn-primary btn-block">Verify & Continue</button>
+      <p class="auth-hint">The QR code is only required during the first setup.</p>
+    </form>
+  </div>
+</section>
+{% endblock %}
